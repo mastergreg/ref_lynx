@@ -4,7 +4,7 @@
 #* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 # File Name : ref_lynx.py
 # Creation Date : 16-12-2012
-# Last Modified : Mon 17 Dec 2012 12:37:20 AM EET
+# Last Modified : Mon 17 Dec 2012 01:22:34 AM EET
 # Created By : Greg Liras <gregliras@gmail.com>
 #_._._._._._._._._._._._._._._._._._._._._.*/
 
@@ -15,19 +15,59 @@ from conf import api_key, username
 import bitly_api
 
 
-def main():
-    data = stdin.read()
-    r = re.compile(" *[1-9][0-9]*\. .*")
+import threading, Queue, time
+q = Queue.Queue()
+rq = Queue.Queue()
+
+def work():
     bcl = bitly_api.Connection(username, api_key)
-    print data[:data.rfind("References")]
-    print "References:"
-    for ans in re.findall(r, data):
-        ans = ans.split()
+    while True:
         try:
-            btlurl = bcl.shorten(ans[1])
-            print ans[0], btlurl['url']
-        except bitly_api.bitly_api.BitlyError:
-            print ans[0], ans[1]
+            arg = q.get(block=False)
+        except Queue.Empty:
+            break
+        else:
+            try:
+                btlurl = bcl.shorten(arg[1])
+            except bitly_api.bitly_api.BitlyError:
+                rq.put((arg[0],arg[1]))
+            else:
+                rq.put((arg[0],btlurl['url']))
+    exit()
+
+def main():
+
+    nThreads = 8
+    ths=[]
+    for i in range(nThreads):
+        t = threading.Thread(target=work)
+        t.setDaemon(True)
+        ths.append(t)
+
+    data = stdin.read()
+    r = re.compile("[ \t]*[1-9][0-9]*\. .*")
+    bcl = bitly_api.Connection(username, api_key)
+    ref = data.rfind("References")
+    print data[:ref]
+    print "References:"
+    allRefs = re.findall(r, data[ref:])
+    for ans in allRefs:
+        ans = ans.split()
+        q.put(ans)
+    map(lambda x: x.start(), ths)
+    map(lambda x: x.join(), ths)
+
+    d = {}
+    while True:
+        try:
+            ans = rq.get(block=False)
+        except Queue.Empty:
+            break
+        else:
+            d[ans[0]] = ans[1]
+    for ans in allRefs:
+        ans = ans.split()
+        print ans[0], d[ans[0]]
 
 
 
