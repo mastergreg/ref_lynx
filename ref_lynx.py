@@ -4,7 +4,7 @@
 #* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 # File Name : ref_lynx.py
 # Creation Date : 16-12-2012
-# Last Modified : Mon 17 Dec 2012 12:32:39 AM EET
+# Last Modified : Mon 17 Dec 2012 12:37:20 AM EET
 # Created By : Greg Liras <gregliras@gmail.com>
 #_._._._._._._._._._._._._._._._._._._._._.*/
 
@@ -23,8 +23,11 @@ def main():
     print "References:"
     for ans in re.findall(r, data):
         ans = ans.split()
-        btlurl = bcl.shorten(ans[1])
-        print ans[0], btlurl['url']
+        try:
+            btlurl = bcl.shorten(ans[1])
+            print ans[0], btlurl['url']
+        except bitly_api.bitly_api.BitlyError:
+            print ans[0], ans[1]
 
 
 
