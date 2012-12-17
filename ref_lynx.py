@@ -4,7 +4,7 @@
 #* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 # File Name : ref_lynx.py
 # Creation Date : 16-12-2012
-# Last Modified : Mon 17 Dec 2012 01:22:34 AM EET
+# Last Modified : Mon 17 Dec 2012 11:50:33 AM EET
 # Created By : Greg Liras <gregliras@gmail.com>
 #_._._._._._._._._._._._._._._._._._._._._.*/
 
@@ -46,16 +46,17 @@ def main():
 
     data = stdin.read()
     r = re.compile("[ \t]*[1-9][0-9]*\. .*")
-    bcl = bitly_api.Connection(username, api_key)
     ref = data.rfind("References")
     print data[:ref]
-    print "References:"
     allRefs = re.findall(r, data[ref:])
     for ans in allRefs:
         ans = ans.split()
         q.put(ans)
     map(lambda x: x.start(), ths)
     map(lambda x: x.join(), ths)
+    if allRefs:
+        print "References:"
+
 
     d = {}
     while True:
